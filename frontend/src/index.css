@@ -101,6 +101,7 @@ header {
   border-radius: 600px;
   padding: 0.6rem 1.5rem;
   font-weight: 700;
+  border: none;
 }
 
 .header-nav button:hover {
