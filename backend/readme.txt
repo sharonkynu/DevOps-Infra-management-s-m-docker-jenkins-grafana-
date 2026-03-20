@@ -1,3 +1,5 @@
+go run main.go
+
 GET  http://localhost:8080/containers
 POST http://localhost:8080/containers/restart/{id}
 
