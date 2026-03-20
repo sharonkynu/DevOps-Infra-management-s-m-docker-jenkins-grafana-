@@ -184,7 +184,7 @@ export default function JobList({ apiBase }) {
                         <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
                           <input 
                             type="text" 
-                            placeholder="Params (branch=dev)"
+                            placeholder="branch_name"
                             value={branches[job.name] || ''}
                             onChange={e => setBranches(prev => ({ ...prev, [job.name]: e.target.value }))}
                             style={{ 
