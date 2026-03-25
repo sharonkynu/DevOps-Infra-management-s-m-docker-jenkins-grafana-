@@ -246,7 +246,7 @@ func TriggerBuild(w http.ResponseWriter, r *http.Request) {
 // ========================
 
 func StopBuild(w http.ResponseWriter, r *http.Request) {
-	jobURL := r.URL.Query().Get("url")
+	jobURL := strings.TrimSuffix(r.URL.Query().Get("url"), "/")
 	buildNum := r.URL.Query().Get("build")
 
 	if jobURL == "" || buildNum == "" {
@@ -259,14 +259,18 @@ func StopBuild(w http.ResponseWriter, r *http.Request) {
 		// ignore if disabled
 	}
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s/stop", jobURL, buildNum), nil)
+	// Try /stop first
+	stopURL := fmt.Sprintf("%s/%s/stop", jobURL, buildNum)
+	req, err := http.NewRequest("POST", stopURL, nil)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
 	req.SetBasicAuth(username, token)
-	req.Header.Set(field, crumb)
+	if field != "" && crumb != "" {
+		req.Header.Set(field, crumb)
+	}
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -277,7 +281,24 @@ func StopBuild(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		http.Error(w, fmt.Sprintf("failed to stop build: %d", resp.StatusCode), resp.StatusCode)
+		// Fallback to /abort if /stop fails
+		abortURL := fmt.Sprintf("%s/%s/abort", jobURL, buildNum)
+		reqAbort, _ := http.NewRequest("POST", abortURL, nil)
+		reqAbort.SetBasicAuth(username, token)
+		if field != "" && crumb != "" {
+			reqAbort.Header.Set(field, crumb)
+		}
+		
+		respAbort, errAbort := client.Do(reqAbort)
+		if errAbort == nil {
+			defer respAbort.Body.Close()
+			if respAbort.StatusCode < 400 {
+				w.Write([]byte("build aborted"))
+				return
+			}
+		}
+
+		http.Error(w, fmt.Sprintf("failed to stop build: code %d (stop) and %v (abort)", resp.StatusCode, respAbort.StatusCode), resp.StatusCode)
 		return
 	}
 
