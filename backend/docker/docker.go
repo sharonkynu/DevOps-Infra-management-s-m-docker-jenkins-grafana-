@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/docker/docker/api/types/container"
@@ -12,12 +13,23 @@ import (
 )
 
 func ListContainers(w http.ResponseWriter, r *http.Request) {
-	cli, _ := client.NewClientWithOpts(client.FromEnv)
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		log.Printf("Docker Client Error: %v", err)
+		http.Error(w, "Docker Engine Unreachable", 500)
+		return
+	}
 
-	containers, _ := cli.ContainerList(context.Background(), container.ListOptions{
+	containers, err := cli.ContainerList(context.Background(), container.ListOptions{
 		All: true,
 	})
+	if err != nil {
+		log.Printf("Docker List Error: %v", err)
+		http.Error(w, "Failed to list containers", 500)
+		return
+	}
 
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(containers)
 }
 

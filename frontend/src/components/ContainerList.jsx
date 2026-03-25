@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import ConfirmationModal from './ConfirmationModal';
+import LogModal from './LogModal';
 
 export default function ContainerList({ apiBase }) {
   const [containers, setContainers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingAction, setLoadingAction] = useState({});
   const [modal, setModal] = useState({ isOpen: false, title: '', message: '', onAllow: null });
+  const [logModal, setLogModal] = useState({ isOpen: false, title: '', content: '' });
 
   const fetchContainers = async () => {
     try {
@@ -25,11 +27,11 @@ export default function ContainerList({ apiBase }) {
     return () => clearInterval(interval);
   }, [apiBase]);
 
-  const restartContainer = (id) => {
+  const restartContainer = (id, name) => {
     setModal({
       isOpen: true,
       title: 'Confirm Container Restart',
-      message: `Instruct Docker Engine to RESTART container [${id.substring(0, 12)}]?`,
+      message: `Instruct Docker Engine to RESTART container [${name}]?`,
       onAllow: async () => {
         setModal(prev => ({ ...prev, isOpen: false }));
         await executeRestart(id);
@@ -54,17 +56,17 @@ export default function ContainerList({ apiBase }) {
   };
 
   const viewLogs = async (id, name) => {
+    setLogModal({ isOpen: true, title: `Logs: ${name}`, content: 'Fetching logs...' });
     try {
       const res = await fetch(`${apiBase}/containers/logs/${id}`);
       if (!res.ok) {
-        alert("Failed to fetch logs");
+        setLogModal(prev => ({ ...prev, content: "Failed to fetch logs" }));
         return;
       }
       const text = await res.text();
-      const logWindow = window.open("", "_blank");
-      logWindow.document.write(`<title>Logs: ${name}</title><pre style="background:#111;color:#eee;padding:1rem;margin:0;min-height:100vh;font-family:monospace;white-space:pre-wrap;word-wrap:break-word;">${text.replace(/</g, "&lt;")}</pre>`);
+      setLogModal(prev => ({ ...prev, content: text }));
     } catch (e) {
-      alert("Error fetching logs: " + e.message);
+      setLogModal(prev => ({ ...prev, content: "Error fetching logs: " + e.message }));
     }
   };
 
@@ -72,49 +74,43 @@ export default function ContainerList({ apiBase }) {
     <div className="panel">
       <h2>🐳 Docker Containers</h2>
       {loading ? (
-        <p style={{ color: '#94a3b8' }}>Loading containers...</p>
+        <p style={{ color: 'var(--text-muted)' }}>Loading infrastructure components...</p>
       ) : containers.length === 0 ? (
-        <p style={{ color: '#94a3b8' }}>No containers found.</p>
+        <p style={{ color: 'var(--text-muted)' }}>No containers found on the host.</p>
       ) : (
-        <div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.5rem' }}>
           {containers.map(c => {
-            const name = c?.Names?.[0]?.replace('/', '') || 'Unknown Container';
+            const name = c?.Names?.[0]?.replace('/', '') || 'Unknown';
             const project = c?.Labels?.['com.docker.compose.project'] || 'Standalone';
             const isRunning = c?.State === 'running';
             
             return (
               <div key={c.Id} className="list-item">
-                <div className="item-details">
-                  <p style={{ fontSize: '0.75rem', marginBottom: '0.2rem', color: '#10b981' }}>
-                    📦 {project}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
+                    {project.toUpperCase()}
                   </p>
-                  <h4>
-                    {name}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <span style={{ fontWeight: 800, fontSize: '1.1rem' }}>{name}</span>
                     <span className={`badge ${isRunning ? 'success' : 'danger'}`}>
                       {c?.State || 'unknown'}
                     </span>
-                  </h4>
-                  <p>{c?.Image || 'Unknown Image'} • {c?.Status || 'Unknown Status'}</p>
+                  </div>
+                  <p style={{ opacity: 0.6 }}>{c?.Status || 'Unknown Status'}</p>
                 </div>
-                <div>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <button 
                     onClick={() => viewLogs(c.Id, name)}
-                    title="View Logs"
-                    style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-main)', marginRight: '0.5rem' }}
+                    style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--glass-border)' }}
                   >
-                    Logs
+                    View Logs
                   </button>
                   <button 
-                    onClick={() => restartContainer(c.Id)}
-                    title="Restart Container"
+                    onClick={() => restartContainer(c.Id, name)}
                     disabled={loadingAction[c.Id] === 'restarting'}
-                    style={
-                      loadingAction[c.Id] === 'restarting' ? { opacity: 0.7, cursor: 'not-allowed' } : 
-                      loadingAction[c.Id] === 'restarted' ? { background: 'var(--text-main)', color: 'var(--bg-color)'} : {}
-                    }
                   >
-                    {loadingAction[c.Id] === 'restarting' ? <><span className="spin">🔄</span> Restarting...</> : 
-                     loadingAction[c.Id] === 'restarted' ? '✅ Restarted' : 'Restart'}
+                    {loadingAction[c.Id] === 'restarting' ? <span className="spin">🔄</span> : 
+                     loadingAction[c.Id] === 'restarted' ? '✓' : 'Restart'}
                   </button>
                 </div>
               </div>
@@ -129,6 +125,13 @@ export default function ContainerList({ apiBase }) {
         message={modal.message}
         onAllow={modal.onAllow}
         onDeny={modal.onDeny}
+      />
+
+      <LogModal 
+        isOpen={logModal.isOpen}
+        title={logModal.title}
+        logs={logModal.content}
+        onClose={() => setLogModal(prev => ({ ...prev, isOpen: false }))}
       />
     </div>
   );

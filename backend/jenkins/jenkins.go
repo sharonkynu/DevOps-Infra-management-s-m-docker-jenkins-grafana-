@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -132,6 +133,7 @@ func fetchJobs(url string, currentFolder string, result *[]SimpleJob) error {
 
 	resp, err := doRequest("GET", apiPath)
 	if err != nil {
+		log.Printf("Jenkins Fetch Error (%s): %v", apiPath, err)
 		return err
 	}
 	defer resp.Body.Close()

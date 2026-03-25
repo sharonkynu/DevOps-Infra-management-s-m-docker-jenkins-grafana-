@@ -53,21 +53,19 @@ export default function UserManagement({ apiBase }) {
   };
 
   return (
-    <div className="panel" style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <h2 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-        <span style={{ fontSize: '1.8rem' }}>👥</span> User Management
-      </h2>
+    <div className="panel" style={{ maxWidth: '900px', margin: '0 auto' }}>
+      <h2>👥 User Management</h2>
       
-      {error && <p style={{ color: '#ef4444', marginBottom: '1.5rem', background: 'rgba(239,68,68,0.1)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.3)'}}>{error}</p>}
+      {error && <p style={{ color: 'var(--error)', marginBottom: '1.5rem', background: 'rgba(255,100,100,0.1)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>{error}</p>}
       
-      <div style={{ marginBottom: '3rem', background: 'var(--bg-color)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-        <h3 style={{ marginBottom: '1.25rem', fontSize: '1.1rem', color: 'var(--text-muted)' }}>CREATE NEW USER</h3>
+      <div style={{ marginBottom: '3rem', background: 'rgba(255,255,255,0.02)', padding: '2rem', borderRadius: '20px', border: '1px solid var(--glass-border)' }}>
+        <h3 style={{ marginBottom: '1.5rem', fontSize: '0.8rem', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>PROVISION NEW ACCOUNT</h3>
         <form onSubmit={handleCreate} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
           <input 
             type="text" 
             placeholder="Username" 
             className="grafana-input" 
-            style={{ flex: 1, minWidth: '200px' }}
+            style={{ flex: 1, minWidth: '200px', background: 'rgba(0,0,0,0.3)' }}
             value={newUsername} 
             onChange={e=>setNewUsername(e.target.value)} 
           />
@@ -75,34 +73,33 @@ export default function UserManagement({ apiBase }) {
             type="password" 
             placeholder="Password" 
             className="grafana-input" 
-            style={{ flex: 1, minWidth: '200px' }}
+            style={{ flex: 1, minWidth: '200px', background: 'rgba(0,0,0,0.3)' }}
             value={newPassword} 
             onChange={e=>setNewPassword(e.target.value)} 
           />
-          <button type="submit" style={{ padding: '0.65rem 2rem', fontWeight: '800' }}>Provision User</button>
+          <button type="submit">Provision User</button>
         </form>
       </div>
 
-      <h3 style={{ marginBottom: '1.25rem', fontSize: '1.1rem', color: 'var(--text-muted)' }}>ACTIVE ACCOUNTS ({users.length})</h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+      <h3 style={{ marginBottom: '1.5rem', fontSize: '0.8rem', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>ACTIVE ACCOUNTS ({users.length})</h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {users.map(u => (
-          <div key={u.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-color)', padding: '1.25rem 1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)', transition: 'border-color 0.2s' }} className="user-card-hover">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--panel-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', border: '1px solid var(--border-color)' }}>
+          <div key={u.id} className="list-item">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+              <div style={{ width: '45px', height: '45px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', border: '1px solid var(--glass-border)' }}>
                 👤
               </div>
-              <span style={{ fontWeight: '600', fontSize: '1.1rem', color: 'var(--text-main)' }}>{u.username}</span>
-              {u.username === 'admin' && (
-                <span style={{ background: '#3b82f6', color: '#fff', fontSize: '0.65rem', padding: '0.3rem 0.6rem', borderRadius: '99px', fontWeight: '800', letterSpacing: '0.05em' }}>
-                  SUPERADMIN
-                </span>
-              )}
+              <div>
+                <span style={{ fontWeight: '700', fontSize: '1.1rem' }}>{u.username}</span>
+                {u.username === 'admin' && (
+                  <span className="badge" style={{ marginLeft: '1rem' }}>SYSTEM ADMIN</span>
+                )}
+              </div>
             </div>
             {u.username !== 'admin' && (
               <button 
                 onClick={() => handleDelete(u.id)}
-                title="Revoke Access"
-                style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)', padding: '0.6rem 1.5rem', borderRadius: '8px' }}
+                style={{ background: 'rgba(255,100,100,0.1)', color: 'var(--error)', border: '1px solid var(--glass-border)', padding: '0.6rem 1.25rem' }}
               >
                 Delete
               </button>

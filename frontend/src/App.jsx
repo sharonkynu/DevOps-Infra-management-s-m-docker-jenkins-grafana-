@@ -14,12 +14,12 @@ window.fetch = async (...args) => {
   let [resource, config] = args;
   if (!config) config = {};
   if (!config.headers) config.headers = {};
-  
+
   const token = localStorage.getItem('kynu_token');
   if (token) {
     config.headers['Authorization'] = `Bearer ${token}`;
   }
-  
+
   const response = await originalFetch(resource, config);
   if (response.status === 401) {
     localStorage.removeItem('kynu_token');
@@ -28,20 +28,24 @@ window.fetch = async (...args) => {
   return response;
 };
 
+const NAV_TABS = [
+  { id: 'overview', label: 'Overview',     icon: '◈' },
+  { id: 'docker',   label: 'Docker',       icon: '◉' },
+  { id: 'jenkins',  label: 'Jenkins',      icon: '◆' },
+  { id: 'grafana',  label: 'Grafana',      icon: '◎' },
+  { id: 'users',    label: 'System Users', icon: '◇' },
+];
+
 function App() {
   const [activeTab, setActiveTab] = useState('overview');
   const [theme, setTheme] = useState('dark');
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('kynu_token'));
 
-  // Apply theme class to body
   useEffect(() => {
     document.body.className = `theme-${theme}`;
   }, [theme]);
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-  };
-
+  const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   const handleLogout = () => {
     localStorage.removeItem('kynu_token');
     setIsAuthenticated(false);
@@ -58,55 +62,38 @@ function App() {
           <h1>DevOps <span>Systems</span></h1>
           <p>DevOps Automated Infrastructure</p>
         </div>
-        
+
         <div className="header-controls">
-          <div className="header-nav">
-            <button 
-              className={activeTab === 'overview' ? 'active' : ''} 
-              onClick={() => setActiveTab('overview')}
-            >
-              Overview
-            </button>
-            <button 
-              className={activeTab === 'docker' ? 'active' : ''} 
-              onClick={() => setActiveTab('docker')}
-            >
-              Docker
-            </button>
-            <button 
-              className={activeTab === 'jenkins' ? 'active' : ''} 
-              onClick={() => setActiveTab('jenkins')}
-            >
-              Jenkins
-            </button>
-            <button 
-              className={activeTab === 'grafana' ? 'active' : ''} 
-              onClick={() => setActiveTab('grafana')}
-            >
-              Grafana
-            </button>
-            <button 
-              className={activeTab === 'users' ? 'active' : ''} 
-              onClick={() => setActiveTab('users')}
-            >
-              System Users
-            </button>
-          </div>
-          <button className="theme-toggle" onClick={toggleTheme}>
+          <nav className="header-nav" aria-label="Main navigation">
+            {NAV_TABS.map(tab => (
+              <button
+                key={tab.id}
+                className={activeTab === tab.id ? 'active' : ''}
+                onClick={() => setActiveTab(tab.id)}
+                aria-current={activeTab === tab.id ? 'page' : undefined}
+              >
+                <span aria-hidden="true">{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+
+          <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
             {theme === 'dark' ? '◐ Light Mode' : '◑ Dark Mode'}
           </button>
-          <button className="theme-toggle" onClick={handleLogout} style={{ border: '1px solid #ef4444', color: '#ef4444' }}>
+
+          <button className="logout-btn" onClick={handleLogout} aria-label="Logout">
             ⏏ Logout
           </button>
         </div>
       </header>
 
-      <div className="page-content">
+      <div className="page-content fade-in">
         {activeTab === 'overview' && <SystemMetrics apiBase={API_BASE} />}
-        {activeTab === 'docker' && <ContainerList apiBase={API_BASE} />}
-        {activeTab === 'jenkins' && <JobList apiBase={API_BASE} />}
-        {activeTab === 'grafana' && <GrafanaPanel />}
-        {activeTab === 'users' && <UserManagement apiBase={API_BASE} />}
+        {activeTab === 'docker'   && <ContainerList apiBase={API_BASE} />}
+        {activeTab === 'jenkins'  && <JobList apiBase={API_BASE} />}
+        {activeTab === 'grafana'  && <GrafanaPanel />}
+        {activeTab === 'users'    && <UserManagement apiBase={API_BASE} />}
       </div>
     </div>
   );
